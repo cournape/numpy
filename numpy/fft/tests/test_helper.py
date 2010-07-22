@@ -4,7 +4,7 @@
 """
 
 from numpy.testing import *
-from numpy.fft import fftshift,ifftshift,fftfreq
+from numpy.fft import fftshift,ifftshift,fftfreq,nextpow2
 
 from numpy import pi
 
@@ -45,6 +45,10 @@ class TestFFTFreq(TestCase):
         assert_array_almost_equal(10*fftfreq(10),x)
         assert_array_almost_equal(10*pi*fftfreq(10,pi),x)
 
+def test_nextpow2():
+    for i, j in ((0, 1), (1, 0), (2, 1), (3, 2), (4, 2), (5, 3), (15, 4), \
+                 (16, 4)):
+        assert_array_almost_equal(nextpow2(i), j)
 
 if __name__ == "__main__":
     run_module_suite()

@@ -3,12 +3,13 @@ Discrete Fourier Transforms - helper.py
 """
 # Created by Pearu Peterson, September 2002
 
-__all__ = ['fftshift','ifftshift','fftfreq']
+__all__ = ['fftshift','ifftshift','fftfreq','nextpow2']
 
 from numpy.core import asarray, concatenate, arange, take, \
     integer, empty
 import numpy.core.numerictypes as nt
 import types
+import numpy as np
 
 def fftshift(x,axes=None):
     """
@@ -160,3 +161,15 @@ def fftfreq(n,d=1.0):
     results[N:] = p2
     return results * val
     #return hstack((arange(0,(n-1)/2 + 1), arange(-(n/2),0))) / (n*d)
+
+def nextpow2(n):
+    """Return smallest m such as 2**m >= n."""
+    if n < 0:
+        raise ValueError("Input should be >= 0")
+    elif n == 0:
+        return 1
+    else:
+        m = int(np.floor(np.log2(n)))
+        if 2 ** m < n:
+            m += 1
+        return m
