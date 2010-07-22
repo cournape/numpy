@@ -41,6 +41,15 @@ import fftpack_lite as fftpack
 _fft_cache = {}
 _real_fft_cache = {}
 
+def _raw_fft_last_axis(a, n, init_function, work_function, fft_cache):
+    try:
+        wsave = fft_cache[n]
+    except(KeyError):
+        wsave = init_function(n)
+        fft_cache[n] = wsave
+
+    return work_function(a, wsave)
+
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache = _fft_cache ):
     a = asarray(a)
@@ -50,12 +59,6 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
 
     if n < 1:
         raise ValueError("Invalid number of FFT data points (%d) specified." % n)
-
-    try:
-        wsave = fft_cache[n]
-    except(KeyError):
-        wsave = init_function(n)
-        fft_cache[n] = wsave
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -73,7 +76,7 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
 
     if axis != -1:
         a = swapaxes(a, axis, -1)
-    r = work_function(a, wsave)
+    r = _raw_fft_last_axis(a, n, init_function, work_function, fft_cache)
     if axis != -1:
         r = swapaxes(r, axis, -1)
     return r
