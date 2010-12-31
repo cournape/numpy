@@ -34,9 +34,11 @@ __all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn',
            'refft', 'irefft','refftn','irefftn', 'refft2', 'irefft2']
 
+import numpy as np
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
      take
 import fftpack_lite as fftpack
+from numpy.fft.helper import is_prime, nextpow2
 
 _fft_cache = {}
 _real_fft_cache = {}
@@ -50,8 +52,7 @@ def _raw_fft_last_axis(a, n, init_function, work_function, fft_cache):
 
     return work_function(a, wsave)
 
-def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
-             work_function=fftpack.cfftf, fft_cache = _fft_cache ):
+def _prepare_array(a, n, axis):
     a = asarray(a)
 
     if n is None:
@@ -73,7 +74,10 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             z = zeros(s, a.dtype.char)
             z[index] = a
             a = z
+    return a, n
 
+def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
+             work_function=fftpack.cfftf, fft_cache=_fft_cache):
     if axis != -1:
         a = swapaxes(a, axis, -1)
     r = _raw_fft_last_axis(a, n, init_function, work_function, fft_cache)
@@ -81,6 +85,26 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         r = swapaxes(r, axis, -1)
     return r
 
+def _raw_bluestein_last_axis(a, n, direction):
+    s = a.shape
+    m = 2 ** nextpow2(2 * n - 1)
+
+    lw = 2.j * np.pi / n
+    fac = np.exp(lw * direction * 0.5 * np.ones(s) * np.arange(n) ** 2)
+    x1 = a * fac
+    x2 = np.exp(lw * direction * 0.5 * np.ones(s[:-1] + (m,)) * np.arange(-(m+1)/2+1, (m+1)/2) ** 2)
+
+    if direction == -1:
+        fac /= n
+    return fac * ifft(fft(x1, m) * fft(x2, m))[..., m/2:m/2 + n]
+
+def _raw_bluestein(a, n, axis, direction):
+    if axis != -1:
+        a = swapaxes(a, axis, -1)
+    r = _raw_bluestein_last_axis(a, n, direction)
+    if axis != -1:
+        r = swapaxes(r, axis, -1)
+    return r
 
 def fft(a, n=None, axis=-1):
     """
@@ -164,8 +188,14 @@ def fft(a, n=None, axis=-1):
     the `numpy.fft` documentation.
 
     """
-
-    return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
+    a, n = _prepare_array(a, n, axis)
+    # XXX: bluestein overhead is pretty significant, and is not worth it
+    # compared to n**2 algo used by fftpack for small n - one could decrease
+    # this overhead doing the bluestein transform in C
+    if n > 512 and is_prime(n):
+        return _raw_bluestein(a, n, axis, 1)
+    else:
+        return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
 
 
 def ifft(a, n=None, axis=-1):
@@ -242,12 +272,12 @@ def ifft(a, n=None, axis=-1):
     >>> plt.show()
 
     """
-
     a = asarray(a).astype(complex)
-    if n is None:
-        n = shape(a)[axis]
-    return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
-
+    a, n = _prepare_array(a, n, axis)
+    if n > 512 and is_prime(n):
+        return _raw_bluestein(a, n, axis, 1)
+    else:
+        return _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache) / n
 
 def rfft(a, n=None, axis=-1):
     """
@@ -321,8 +351,8 @@ def rfft(a, n=None, axis=-1):
     exploited to compute only the non-negative frequency terms.
 
     """
-
     a = asarray(a).astype(float)
+    a, n = _prepare_array(a, n, axis)
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf, _real_fft_cache)
 
 
@@ -406,6 +436,7 @@ def irfft(a, n=None, axis=-1):
     a = asarray(a).astype(complex)
     if n is None:
         n = (shape(a)[axis] - 1) * 2
+    a, n = _prepare_array(a, n, axis)
     return _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
                     _real_fft_cache) / n
 

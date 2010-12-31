@@ -173,3 +173,22 @@ def nextpow2(n):
         if 2 ** m < n:
             m += 1
         return m
+
+def first_divisor(n):
+    if n <= 1:
+        return 1
+    elif n % 2 == 0:
+        return 2
+    else:
+        i = 3
+        while i * i <= n:
+            if n % i == 0:
+                return i
+            i += 2
+        return n
+
+def is_prime(n):
+    if n == 1:
+        return False
+    else:
+        return first_divisor(n) == n
