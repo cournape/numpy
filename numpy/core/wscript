@@ -24,7 +24,8 @@ from code_generators import generate_numpy_api, generate_ufunc_api, \
 from setup_common \
     import \
         OPTIONAL_STDFUNCS_MAYBE, OPTIONAL_STDFUNCS, C99_FUNCS_EXTENDED, \
-        C99_FUNCS_SINGLE, C99_COMPLEX_TYPES, C99_COMPLEX_FUNCS
+        C99_FUNCS_SINGLE, C99_COMPLEX_TYPES, C99_COMPLEX_FUNCS, \
+        MANDATORY_FUNCS
 import conflib
 
 NUMPYCONFIG_SYM = []
@@ -151,6 +152,8 @@ def check_math_runtime(conf):
 
     # XXX: this is ugly: mathlib has nothing to do in a public header file
     NUMPYCONFIG_SYM.append(('MATHLIB', ','.join(mlib)))
+
+    conf.check_functions_at_once(MANDATORY_FUNCS, uselib="M")
 
     mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
               'rint', 'trunc')
