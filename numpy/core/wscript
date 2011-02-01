@@ -99,7 +99,7 @@ def type_checks(conf):
     if sys.platform != 'darwin':
         conf.check_ldouble_representation()
 
-    conf.check_type("Py_intptr_t", header_name=header_name, features=features)
+    conf.check_type_size("Py_intptr_t", header_name=header_name, features=features)
 
     # We check declaration AND type because that's how distutils does it.
     try:
