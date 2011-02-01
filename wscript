@@ -67,12 +67,6 @@ def process_write_config(self):
     tsk.set_outputs(self.path.find_or_declare(self.target))
     return tsk
 
-@waflib.TaskGen.feature("numpy_version")
-def process_write_version(self):
-    tsk = self.create_task("write_version")
-    tsk.set_outputs(self.path.find_or_declare(self.target))
-    return tsk
-
 def build(bld):
     bld.recurse("numpy/core")
     bld.recurse("numpy/fft")
