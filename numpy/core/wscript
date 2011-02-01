@@ -63,9 +63,6 @@ def define_no_smp():
     return nosmp == 1
 
 def config_header_hack():
-    if not os.path.exists("build/numpy/core"):
-        os.makedirs("build/numpy/core")
-    shutil.copy("../config.h", "build/numpy/core")
     if not os.path.exists("build/numpy/core/include/numpy"):
         os.makedirs("build/numpy/core/include/numpy")
     shutil.copy("../_numpyconfig.h", "build/numpy/core/include/numpy")
