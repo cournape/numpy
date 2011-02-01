@@ -410,6 +410,7 @@ def get_config_header(self):
     """Fill-in the contents of the config header. Override when you need to write your own config header."""
     config_header = []
 
+    tpl = self.env["CONFIG_HEADER_TEMPLATE"] or "%(content)s"
     tbl = self.env[DEFINES] or waflib.Utils.ordered_dict()
     cmt = self.env[DEFINE_COMMENTS] or waflib.Utils.ordered_dict()
     for key in tbl.allkeys:
@@ -425,4 +426,4 @@ def get_config_header(self):
         else:
             config_header.append('#define %s %s' % (key, value))
         config_header.append('')
-    return "\n".join(config_header)
+    return tpl % {"content": "\n".join(config_header)}

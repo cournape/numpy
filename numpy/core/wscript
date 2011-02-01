@@ -216,6 +216,11 @@ def configure(conf):
     conf.check_inline()
     check_complex(conf)
 
+    conf.env["CONFIG_HEADER_TEMPLATE"] = """\
+%(content)s
+#ifndef _NPY_NPY_CONFIG_H_
+#error config.h should never be included directly, include npy_config.h instead
+#endif"""
     conf.write_config_header("config.h")   
 
     conf.env.INCLUDES = [".", "include", "include/numpy"]
