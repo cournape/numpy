@@ -95,7 +95,8 @@ def type_checks(conf):
                                     features=features, expected_size=2*e_size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
-    # FIXME: long double representation
+    if sys.platform != 'darwin':
+        conf.check_ldouble_representation()
 
     conf.check_type("Py_intptr_t", header_name=header_name, features=features)
 
