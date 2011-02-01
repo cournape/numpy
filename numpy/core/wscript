@@ -47,16 +47,16 @@ def type_checks(conf):
         #else:
         #    NUMPYCONFIG_SYM.append((macro_name, macro_name))
 
-    for c_type in ("float", "double", "long double"):
+    for c_type, e_size in (("float", 4), ("double", 8), ("long double", 12)):
         macro_name = "SIZEOF_%s" % conflib.sanitize_string(c_type)
         size = conf.check_type_size(c_type, header_name=header_name,
-                                    features=features)
+                                    features=features, expected_size=e_size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
         macro_name = "SIZEOF_COMPLEX_%s" % conflib.sanitize_string(c_type)
         complex_def = "struct {%s __x; %s __y;}" % (c_type, c_type)
         size = conf.check_type_size(complex_def, header_name=header_name,
-                                    features=features)
+                                    features=features, expected_size=2*e_size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
     # FIXME: long double representation

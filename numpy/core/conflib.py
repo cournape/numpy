@@ -133,8 +133,7 @@ int main() {
         return ret == 0
     return ret
 
-@waflib.Configure.conf
-def check_type_size(conf, type_name, **kw):
+def do_binary_search(conf, type_name, kw):
     code = """\
 typedef %(type)s waf_check_sizeof_type;
 int main ()
@@ -146,14 +145,7 @@ int main ()
     return 0;
 }
 """ % {"type": type_name}
-
     kw["code"] = code
-    kw["define_name"] = "SIZEOF_%s" % sanitize_string(type_name)
-    kw["define_comment"] = "/* The size of `%s', as computed by sizeof. */" % type_name
-    kw["msg"] = "Checking sizeof(%s)" % type_name
-
-    validate_arguments(conf, kw)
-    conf.start_msg(kw["msg"])
 
     try:
         conf.run_c_code(**kw)
@@ -204,11 +196,43 @@ int main ()
             high = mid
         except conf.errors.ConfigurationError:
             low = mid + 1
-    kw["success"] = 0
-    size = low
-    conf.end_msg(low)
-    conf.post_check(**kw)
+
     return low
+
+@waflib.Configure.conf
+def check_type_size(conf, type_name, expected_size=None, **kw):
+    kw["define_name"] = "SIZEOF_%s" % sanitize_string(type_name)
+    kw["define_comment"] = "/* The size of `%s', as computed by sizeof. */" % type_name
+    kw["msg"] = "Checking sizeof(%s)" % type_name
+
+    validate_arguments(conf, kw)
+    conf.start_msg(kw["msg"])
+
+    if expected_size is not None:
+        code = """\
+typedef %(type)s waf_check_sizeof_type;
+int main ()
+{
+    static int test_array [1 - 2 * !(((long) (sizeof (waf_check_sizeof_type))) == %(size)d)];
+    test_array [0] = 0
+
+    ;
+    return 0;
+}
+""" % {"type": type_name, "size": expected_size}
+        kw["code"] = code
+        try:
+            conf.run_c_code(**kw)
+            size = expected_size
+        except conf.errors.ConfigurationError:
+            size = do_binary_search(conf, type_name, kw)
+    else:
+        size = do_binary_search(conf, type_name, kw)
+
+    kw["success"] = 0
+    conf.end_msg(size)
+    conf.post_check(**kw)
+    return size
 
 @waflib.Configure.conf
 def post_check(self, *k, **kw):
