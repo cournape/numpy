@@ -143,13 +143,11 @@ def build(bld):
             pjoin('src', 'npymath', 'halffloat.c')]
     # FIXME: hack to build static library that can be linked into a dlopen-able
     # library
-    bld(features="c pyext",
-        target="npymath_objects",
+    bld(features="c pyext cstlib",
         source=npymath_sources,
         includes=["src/private", "src/npymath"],
         uselib="cshlib",
-        depends_on="npymath_templates")
-    bld(features="c cstlib", target="npymath", use="npymath_objects")
+        target="npymath")
 
     # multiarray
     bld(name="multiarray_api",
@@ -163,14 +161,14 @@ def build(bld):
         target="_sort",
         source="src/_sortmodule.c",
         includes=includes,
-        use="npymath")
+        uselib_local="npymath")
 
     includes = ["src/multiarray", "src/private"]
     bld(features="c cshlib pyext",
         includes=includes,
         target="multiarray",
         source="src/multiarray/multiarraymodule_onefile.c",
-        use="npymath")
+        uselib_local="npymath")
 
     # ufunc
     bld(features="ufunc_api_gen",
@@ -187,11 +185,11 @@ def build(bld):
         includes=includes,
         target="umath",
         source="src/umath/umathmodule_onefile.c",
-        use="npymath")
+        uselib_local="npymath")
 
     # scalar math
     bld(features="c cshlib pyext",
         #includes=includes,
         target="scalarmath",
         source="src/scalarmathmodule.c",
-        use="npymath")
+        uselib_local="npymath")

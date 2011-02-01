@@ -9,6 +9,6 @@ def build(bld):
             os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
 
     bld(features="c cshlib pyext",
-        target="_compiled_base",
-        includes=includes,
-        source="src/_compiled_base.c")
+        target="fftpack_lite",
+        source="fftpack_litemodule.c fftpack.c",
+        includes=includes)

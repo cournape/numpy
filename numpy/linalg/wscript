@@ -1,5 +1,7 @@
 import os
 
+USE_LAPACK = False
+
 def build(bld):
     # FIXME: there has to be a better way to refer to numpy/core include
     includes = [
@@ -8,7 +10,11 @@ def build(bld):
             os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include/numpy"),
             os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
 
+    source = ['lapack_litemodule.c']
+    if not USE_LAPACK:
+        source.extend(['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
+                       'blas_lite.c', 'dlamch.c', 'f2c_lite.c'])
     bld(features="c cshlib pyext",
-        target="_compiled_base",
-        includes=includes,
-        source="src/_compiled_base.c")
+        target="lapack_lite",
+        source=source,
+        includes=includes)
