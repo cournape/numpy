@@ -7,6 +7,7 @@ from os.path \
         join as pjoin
 
 import waflib
+import waflib.Errors
 from waflib.Task \
     import \
         Task
@@ -20,6 +21,8 @@ from code_generators.numpy_api \
 from code_generators import generate_numpy_api, generate_ufunc_api, \
         generate_umath
 
+import conflib
+
 def config_header_hack():
     if not os.path.exists("build/numpy/core"):
         os.makedirs("build/numpy/core")
@@ -31,6 +34,13 @@ def config_header_hack():
 def configure(conf):
     # TODO: remove this once we get proper configuration
     config_header_hack()
+
+    try:
+        conf.check_header("endian.h")
+    except waflib.Errors.ConfigurationError:
+        pass
+
+    conf.write_config_header("config.h")   
 
     conf.env.INCLUDES = [".", "include", "include/numpy"]
 
