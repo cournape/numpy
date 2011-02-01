@@ -193,6 +193,7 @@ def configure(conf):
     type_checks(conf)
     signal_smp_checks(conf)
     check_math_runtime(conf)
+    conf.check_inline()
 
     conf.write_config_header("config.h")   
 
