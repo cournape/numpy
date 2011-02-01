@@ -235,6 +235,73 @@ int main ()
     return size
 
 @waflib.Configure.conf
+def check_functions_at_once(self, funcs, **kw):
+    header = []
+    header = ['#ifdef __cplusplus']
+    header.append('extern "C" {')
+    header.append('#endif')
+    for f in funcs:
+        header.append("\tchar %s();" % f)
+        # Handle MSVC intrinsics: force MS compiler to make a function
+        # call. Useful to test for some functions when built with
+        # optimization on, to avoid build error because the intrinsic
+        # and our 'fake' test declaration do not match.
+        header.append("#ifdef _MSC_VER")
+        header.append("#pragma function(%s)" % f)
+        header.append("#endif")
+    header.append('#ifdef __cplusplus')
+    header.append('};')
+    header.append('#endif')
+    funcs_decl = "\n".join(header)
+
+    tmp = []
+    for f in funcs:
+        tmp.append("\t%s();" % f)
+    tmp = "\n".join(tmp)
+
+    code = r"""
+%(include)s
+%(funcs_decl)s
+
+int main (void)
+{
+    %(tmp)s
+        return 0;
+}
+""" % {"tmp": tmp, "include": to_header(kw), "funcs_decl": funcs_decl}
+    kw["code"] = code
+    if not "features" in kw:
+        kw["features"] = ["c", "cprogram"]
+
+    msg = ", ".join(funcs)
+    if len(msg) > 30:
+        _funcs = list(funcs)
+        msg = []
+        while len(", ".join(msg)) < 30 and _funcs:
+            msg.append(_funcs.pop(0))
+        msg = ", ".join(msg) + ",..."
+    if "lib" in kw:
+        kw["msg"] = "Checking for functions %s in library %r" % (msg, kw["lib"])
+    else:
+        kw["msg"] = "Checking for functions %s" % msg
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    # We set the config.h define here because we need to define several of them
+    # in one shot
+    if ret == 0:
+        for f in funcs:
+            self.define_with_comment("HAVE_FUNC_%s" % sanitize_string(f), 1,
+                                "/* Define to 1 if you have the `%s' function */" % f)
+
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
+@waflib.Configure.conf
 def post_check(self, *k, **kw):
     "set the variables after a test was run successfully"
 
