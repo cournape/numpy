@@ -78,6 +78,139 @@ int main()
     return ret
 
 @waflib.Configure.conf
+def check_declaration(self, symbol, **kw):
+    code = r"""
+int main()
+{
+#ifndef %s
+    (void) %s;
+#endif
+    ;
+    return 0;
+}
+""" % (symbol, symbol)
+
+    kw["code"] = to_header(kw) + code
+    kw["msg"] = "Checking for macro %r" % symbol
+    kw["errmsg"] = "not found"
+    kw["okmsg"] = "yes"
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    kw["define_name"] = "HAVE_DECL_%s" % sanitize_string(symbol)
+    kw["define_comment"] = "/* Set to 1 if %s is defined. */" % symbol
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
+@waflib.Configure.conf
+def check_type(self, type_name, **kw):
+    code = r"""
+int main() {
+	if ((%(type_name)s *) 0)
+        return 0;
+	if (sizeof (%(type_name)s))
+        return 0;
+}
+""" % {"type_name": type_name}
+
+    kw["code"] = to_header(kw) + code
+    kw["msg"] = "Checking for type %r" % type_name
+    kw["errmsg"] = "not found"
+    kw["okmsg"] = "yes"
+
+    validate_arguments(self, kw)
+    try_compile(self, kw)
+    ret = kw["success"]
+
+    kw["define_name"] = "HAVE_%s" % sanitize_string(type_name)
+    kw["define_comment"] = "/* Set to 1 if %s is defined. */" % type_name
+    self.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
+
+@waflib.Configure.conf
+def check_type_size(conf, type_name, **kw):
+    code = """\
+typedef %(type)s waf_check_sizeof_type;
+int main ()
+{
+    static int test_array [1 - 2 * !(((long) (sizeof (waf_check_sizeof_type))) >= 0)];
+    test_array [0] = 0
+
+    ;
+    return 0;
+}
+""" % {"type": type_name}
+
+    kw["code"] = code
+    kw["define_name"] = "SIZEOF_%s" % sanitize_string(type_name)
+    kw["define_comment"] = "/* The size of `%s', as computed by sizeof. */" % type_name
+    kw["msg"] = "Checking sizeof(%s)" % type_name
+
+    validate_arguments(conf, kw)
+    conf.start_msg(kw["msg"])
+
+    try:
+        conf.run_c_code(**kw)
+    except conf.errors.ConfigurationError, e:
+        conf.end_msg("failed !")
+        if waflib.Logs.verbose > 1:
+            raise
+        else:
+            conf.fatal("The configuration failed !")
+
+    body = r"""
+typedef %(type)s waf_check_sizeof_type;
+int main ()
+{
+    static int test_array [1 - 2 * !(((long) (sizeof (waf_check_sizeof_type))) <= %(size)s)];
+    test_array [0] = 0
+
+    ;
+    return 0;
+}
+"""
+    # The principle is simple: we first find low and high bounds
+    # of size for the type, where low/high are looked up on a log
+    # scale. Then, we do a binary search to find the exact size
+    # between low and high
+    low = 0
+    mid = 0
+    while True:
+        try:
+            kw["code"] = to_header(kw) + body % {"type": type_name, "size": mid}
+            validate_arguments(conf, kw)
+            conf.run_c_code(**kw)
+            break
+        except conf.errors.ConfigurationError:
+            #log.info("failure to test for bound %d" % mid)
+            low = mid + 1
+            mid = 2 * mid + 1
+
+    high = mid
+    ret = None
+    # Binary search:
+    while low != high:
+        mid = (high - low) / 2 + low
+        try:
+            kw["code"] = to_header(kw) + body % {"type": type_name, "size": mid}
+            validate_arguments(conf, kw)
+            ret = conf.run_c_code(**kw)
+            high = mid
+        except conf.errors.ConfigurationError:
+            low = mid + 1
+    kw["success"] = 0
+    size = low
+    conf.end_msg(low)
+    conf.post_check(**kw)
+    return low
+
+@waflib.Configure.conf
 def post_check(self, *k, **kw):
     "set the variables after a test was run successfully"
 
