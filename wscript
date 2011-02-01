@@ -44,10 +44,12 @@ def post_build(bld):
                 if hasattr(task_gen, "link_task"):
                     ltask = task_gen.link_task
                     for output in ltask.outputs:
-                        shutil.copy(output.abspath(), output.path_from(bld.bldnode))
+                        if not output.is_child_of(bld.srcnode):
+                            shutil.copy(output.abspath(), output.path_from(bld.bldnode))
                 elif "gen_pymodule" in task_gen.features:
                     for output in task_gen.tasks[0].outputs:
-                        shutil.copy(output.abspath(), output.path_from(bld.bldnode))
+                        if not output.is_child_of(bld.srcnode):
+                            shutil.copy(output.abspath(), output.path_from(bld.bldnode))
 
 # FIXME: abstract those module gen tasks...
 class write_module(waflib.Task.Task):
