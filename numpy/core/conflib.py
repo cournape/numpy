@@ -229,6 +229,7 @@ int main ()
     else:
         size = do_binary_search(conf, type_name, kw)
 
+    kw["define_value"] = size
     kw["success"] = 0
     conf.end_msg(size)
     conf.post_check(**kw)
@@ -353,10 +354,11 @@ def post_check(self, *k, **kw):
     def define_or_stuff():
         nm = kw['define_name']
         cmt = kw.get('define_comment', None)
+        value = kw.get("define_value", is_success)
         if kw['execute'] and kw.get('define_ret', None) and isinstance(is_success, str):
-            self.define_with_comment(kw['define_name'], is_success, cmt, quote=kw.get('quote', 1))
+            self.define_with_comment(kw['define_name'], value, cmt, quote=kw.get('quote', 1))
         else:
-            self.define_cond(kw['define_name'], is_success, cmt)
+            self.define_cond(kw['define_name'], value, cmt)
 
     if 'define_name' in kw:
         define_or_stuff()
@@ -399,7 +401,7 @@ def define_cond(self, name, value, comment):
     """Conditionally define a name.
     Formally equivalent to: if value: define(name, 1) else: undefine(name)"""
     if value:
-        self.define_with_comment(name, 1, comment)
+        self.define_with_comment(name, value, comment)
     else:
         self.undefine(name)
 
