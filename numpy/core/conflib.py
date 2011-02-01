@@ -149,7 +149,7 @@ int main ()
     return 0;
 }
 """ % {"type": type_name}
-    kw["code"] = code
+    kw["code"] = to_header(kw) + code
 
     try:
         conf.run_c_code(**kw)
