@@ -179,11 +179,17 @@ def check_math_runtime(conf):
 
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         try:
-            conf.check_declaration(f, header_name=header_name, features=features)
+            conf.check_declaration("HAVE_DECL_%s" % f.upper(), header_name=header_name,
+                                   features=features)
             NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(),
                 '#define NPY_HAVE_DECL_%s' % f.upper()))
         except waflib.Errors.ConfigurationError:
-            NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
+            try:
+                conf.check_declaration(f, header_name=header_name, features=features)
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(),
+                    '#define NPY_HAVE_DECL_%s' % f.upper()))
+            except waflib.Errors.ConfigurationError:
+                NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
 
 def check_complex(conf):
     if conf.check_header("complex.h"):
