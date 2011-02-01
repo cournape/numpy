@@ -298,7 +298,7 @@ int main (void)
     # in one shot
     if ret == 0:
         for f in funcs:
-            self.define_with_comment("HAVE_FUNC_%s" % sanitize_string(f), 1,
+            self.define_with_comment("HAVE_%s" % sanitize_string(f), 1,
                                 "/* Define to 1 if you have the `%s' function */" % f)
 
     self.post_check(**kw)
