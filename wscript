@@ -38,8 +38,18 @@ def check_blas_lapack(conf):
         try:
             conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
             conf.env.HAS_CBLAS = True
+
+            conf.check_cc(lib=["lapack", "f77blas", "cblas", "atlas"],
+                          uselib_store="LAPACK")
+            conf.env.HAS_LAPACK = True
         except waflib.Errors.ConfigurationError:
             pass
+
+    # You can manually set up blas/lapack as follows:
+    #conf.env.HAS_CBLAS = True
+    #conf.env.LIB_CBLAS = ["cblas", "atlas"]
+    #conf.env.HAS_LAPACK = True
+    #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
 
 def configure(conf):
     conf.check_tool('compiler_cc')
