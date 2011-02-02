@@ -341,6 +341,9 @@ def build(bld):
             "src/multiarray/einsum.c.src"]
     bld(target="multiarray_templates", source=multiarray_templates)
 
+    multiarray_tests_src = ["src/multiarray/multiarray_tests.c.src"]
+    bld(target="multiarray_tests_templates", source=multiarray_tests_src)
+
     npymath_templates = ["src/npymath/npy_math.c.src",
             "src/npymath/npy_math_complex.c.src",
             "src/npymath/ieee754.c.src"]
@@ -356,6 +359,9 @@ def build(bld):
 
     sort_templates = ["src/_sortmodule.c.src"]
     bld(target="sort_templates", source=sort_templates)
+
+    umath_tests_src = ["src/umath/umath_tests.c.src"]
+    bld(target="umath_tests_templates", source=sort_templates)
 
     # npymath 
     npymath_sources = [
@@ -392,6 +398,11 @@ def build(bld):
         source="src/multiarray/multiarraymodule_onefile.c",
         uselib_local="npymath")
 
+    bld(features="c cshlib pyext",
+        includes=includes,
+        target="multiarray_tests",
+        source="src/multiarray/multiarray_tests.c")
+
     # ufunc
     bld(features="ufunc_api_gen",
         api_tuple=ufunc_api,
@@ -408,6 +419,11 @@ def build(bld):
         target="umath",
         source="src/umath/umathmodule_onefile.c",
         uselib_local="npymath")
+
+    bld(features="c cshlib pyext",
+        includes=includes,
+        target="umath_tests",
+        source="src/umath/umath_tests.c")
 
     # scalar math
     bld(features="c cshlib pyext",
