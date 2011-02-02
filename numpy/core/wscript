@@ -1,0 +1,197 @@
+import os
+import sys
+import shutil
+
+from os.path \
+    import \
+        join as pjoin
+
+import waflib
+from waflib.Task \
+    import \
+        Task
+
+from numpy.distutils.conv_template \
+    import \
+        process_str as process_c_str
+from code_generators.numpy_api \
+    import \
+        multiarray_api, ufunc_api
+from code_generators import generate_numpy_api, generate_ufunc_api, \
+        generate_umath
+
+def config_header_hack():
+    if not os.path.exists("build/numpy/core"):
+        os.makedirs("build/numpy/core")
+    shutil.copy("../config.h", "build/numpy/core")
+    if not os.path.exists("build/numpy/core/include/numpy"):
+        os.makedirs("build/numpy/core/include/numpy")
+    shutil.copy("../_numpyconfig.h", "build/numpy/core/include/numpy")
+
+def configure(conf):
+    # TODO: remove this once we get proper configuration
+    config_header_hack()
+
+    conf.env.INCLUDES = [".", "include", "include/numpy"]
+
+def c_template_rule(task):
+    s = task.inputs[0]
+    cnt = s.read()
+    writestr = process_c_str(cnt)
+    t = task.outputs[0]
+    t.write(writestr)
+
+waflib.TaskGen.declare_chain(name="c_templates", rule=c_template_rule,
+                             ext_in=".src", ext_out=[""], reentrant=False, before=["c"])
+
+class numpy_api_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    def run(self):
+        targets = [o.path_from(self.generator.bld.srcnode) for o in self.outputs]
+        generate_numpy_api.do_generate_api(targets, self.env.API_TUPLE)
+        return 0
+
+class ufunc_api_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    def run(self):
+        targets = [o.path_from(self.generator.bld.srcnode) for o in self.outputs]
+        generate_ufunc_api.do_generate_api(targets, self.env.API_TUPLE)
+        return 0
+
+@waflib.TaskGen.feature("numpy_api_gen")
+def process_multiarray_api_generator(self):
+    tsk = self.create_task("numpy_api_generator")
+    if hasattr(self, "api_tuple"):
+        tsk.env.API_TUPLE = self.api_tuple
+    else:
+        if not "API_TUPLE" in tsk.env:
+            tsk.env.API_TUPLE = ()
+    header = "__%s.h" % self.pattern
+    source = "__%s.c" % self.pattern
+    txt = self.pattern + ".txt"
+    files = [header, source, txt]
+    tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+    return tsk
+
+@waflib.TaskGen.feature("ufunc_api_gen")
+def process_api_ufunc_generator(self):
+    tsk = self.create_task("ufunc_api_generator")
+    if hasattr(self, "api_tuple"):
+        tsk.env.API_TUPLE = self.api_tuple
+    else:
+        if not "API_TUPLE" in tsk.env:
+            tsk.env.API_TUPLE = ()
+    header = "__%s.h" % self.pattern
+    source = "__%s.c" % self.pattern
+    txt = self.pattern + ".txt"
+    files = [header, source, txt]
+    tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+    return tsk
+
+class umath_generator(Task):
+    vars = ["API_TUPLE"]
+    color = "BLUE"
+    before = ["c"]
+    def run(self):
+        if len(self.outputs) > 1:
+            raise ValueError("Only one target (the .c file) is expected in the umath generator task")
+        code = generate_umath.make_code(generate_umath.defdict, generate_umath.__file__)
+        self.outputs[0].write(code)
+        return 0
+
+@waflib.TaskGen.feature("umath_gen")
+def process_umath_generator(self):
+    tsk = self.create_task("umath_generator")
+    source = "__%s.c" % self.pattern
+    tsk.set_outputs(self.path.find_or_declare(source))
+    return tsk
+
+def build(bld):
+    # C templates
+    multiarray_templates = ["src/multiarray/scalartypes.c.src",
+            "src/multiarray/arraytypes.c.src", 
+            "src/multiarray/new_iterator.c.src", 
+            "src/multiarray/lowlevel_strided_loops.c.src", 
+            "src/multiarray/einsum.c.src"]
+    bld(target="multiarray_templates", source=multiarray_templates)
+
+    npymath_templates = ["src/npymath/npy_math.c.src",
+            "src/npymath/npy_math_complex.c.src",
+            "src/npymath/ieee754.c.src"]
+    bld(target="npymath_templates", source=npymath_templates)
+
+    ufunc_templates = ["src/umath/loops.c.src",
+            "src/umath/umathmodule.c.src",
+            "src/umath/funcs.inc.src"]
+    bld(target="ufunc_templates", source=ufunc_templates)
+
+    scalarmath_templates = ["src/scalarmathmodule.c.src"]
+    bld(target="scalarmath_templates", source=scalarmath_templates)
+
+    sort_templates = ["src/_sortmodule.c.src"]
+    bld(target="sort_templates", source=sort_templates)
+
+    # npymath 
+    npymath_sources = [
+            pjoin('src', 'npymath', 'npy_math.c'),
+            pjoin('src', 'npymath', 'npy_math_complex.c'),
+            pjoin('src', 'npymath', 'ieee754.c'),
+            pjoin('src', 'npymath', 'halffloat.c')]
+    # FIXME: hack to build static library that can be linked into a dlopen-able
+    # library
+    bld(features="c pyext",
+        target="npymath_objects",
+        source=npymath_sources,
+        includes=["src/private", "src/npymath"],
+        uselib="cshlib",
+        depends_on="npymath_templates")
+    bld(features="c cstlib", target="npymath", use="npymath_objects")
+
+    # multiarray
+    bld(name="multiarray_api",
+        features="numpy_api_gen",
+        api_tuple=multiarray_api,
+        pattern="multiarray_api")
+
+    # sort
+    includes = [".", "src/private"]
+    bld(features="c cshlib pyext",
+        target="_sort",
+        source="src/_sortmodule.c",
+        includes=includes,
+        use="npymath")
+
+    includes = ["src/multiarray", "src/private"]
+    bld(features="c cshlib pyext",
+        includes=includes,
+        target="multiarray",
+        source="src/multiarray/multiarraymodule_onefile.c",
+        use="npymath")
+
+    # ufunc
+    bld(features="ufunc_api_gen",
+        api_tuple=ufunc_api,
+        pattern="ufunc_api",
+        name="ufunc_api")
+
+    bld(features="umath_gen",
+        pattern="umath_generated",
+        name="umath_gen")
+
+    includes = ["src/umath", "src/private"]
+    bld(features="c cshlib pyext",
+        includes=includes,
+        target="umath",
+        source="src/umath/umathmodule_onefile.c",
+        use="npymath")
+
+    # scalar math
+    bld(features="c cshlib pyext",
+        #includes=includes,
+        target="scalarmath",
+        source="src/scalarmathmodule.c",
+        use="npymath")

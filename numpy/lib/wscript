@@ -1,0 +1,15 @@
+import os
+
+def build(bld):
+    # FIXME: there has to be a better way to refer to numpy/core include
+    includes = [
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/include/numpy"),
+            os.path.join(bld.srcnode.path_from(bld.path), "numpy/core/src/private")]
+
+    #bld(features="c cshlib pyext",
+    #    target="_compiled_base",
+    #    includes=includes,
+    #    source="src/_compiled_base.c")
+
