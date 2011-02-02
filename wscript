@@ -28,11 +28,26 @@ def options(opt):
     opt.tool_options('compiler_cc')
     opt.add_option('-i', dest='inplace', action="store_true")
 
+def check_blas_lapack(conf):
+    conf.env.HAS_CBLAS = False
+    if sys.platform == "win32":
+        print("No blas/lapack check implemented on win32")
+    elif sys.platform == "darwin":
+        print("No blas/lapack check implemented on darwin")
+    else:
+        try:
+            conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
+            conf.env.HAS_CBLAS = True
+        except waflib.Errors.ConfigurationError:
+            pass
+
 def configure(conf):
     conf.check_tool('compiler_cc')
     conf.check_tool('python')
     conf.check_python_version((2, 4, 0))
     conf.check_python_headers()
+
+    check_blas_lapack(conf)
 
     conf.recurse("numpy/core")
 

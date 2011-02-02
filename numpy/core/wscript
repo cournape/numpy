@@ -415,3 +415,10 @@ def build(bld):
         target="scalarmath",
         source="src/scalarmathmodule.c",
         uselib_local="npymath")
+
+    if bld.env.HAS_CBLAS:
+        bld(features="c cshlib pyext",
+            target="_dotblas",
+            source="blasdot/_dotblas.c",
+            includes="src/private",
+            uselib="CBLAS")
