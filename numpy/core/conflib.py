@@ -204,7 +204,7 @@ int main ()
     return low
 
 @waflib.Configure.conf
-def check_type_size(conf, type_name, expected_size=None, **kw):
+def check_type_size(conf, type_name, expected_sizes=None, **kw):
     kw["define_name"] = "SIZEOF_%s" % sanitize_string(type_name)
     kw["define_comment"] = "/* The size of `%s', as computed by sizeof. */" % type_name
     kw["msg"] = "Checking sizeof(%s)" % type_name
@@ -212,23 +212,35 @@ def check_type_size(conf, type_name, expected_size=None, **kw):
     validate_arguments(conf, kw)
     conf.start_msg(kw["msg"])
 
-    if expected_size is not None:
-        code = """\
-typedef %(type)s waf_check_sizeof_type;
-int main ()
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (waf_check_sizeof_type))) == %(size)d)];
-    test_array [0] = 0
-
-    ;
-    return 0;
-}
-""" % {"type": type_name, "size": expected_size}
-        kw["code"] = code
+    if expected_sizes is not None:
         try:
-            conf.run_c_code(**kw)
-            size = expected_size
-        except conf.errors.ConfigurationError:
+            val = int(expected_sizes)
+        except TypeError:
+            values = expected_sizes
+        else:
+            values = [val]
+
+        size = None
+        for value in values:
+            code = """\
+    typedef %(type)s waf_check_sizeof_type;
+    int main ()
+    {
+        static int test_array [1 - 2 * !(((long) (sizeof (waf_check_sizeof_type))) == %(size)d)];
+        test_array [0] = 0
+
+        ;
+        return 0;
+    }
+    """ % {"type": type_name, "size": value}
+            kw["code"] = to_header(kw) + code
+            try:
+                conf.run_c_code(**kw)
+                size = value
+                break
+            except conf.errors.ConfigurationError:
+                pass
+        if size is None:
             size = do_binary_search(conf, type_name, kw)
     else:
         size = do_binary_search(conf, type_name, kw)

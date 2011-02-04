@@ -83,29 +83,30 @@ def type_checks(conf):
         #else:
         #    NUMPYCONFIG_SYM.append((macro_name, macro_name))
 
-    for c_type, e_size in (("float", 4), ("double", 8), ("long double", 12)):
+    for c_type, e_size in (("float", 4), ("double", 8), ("long double", [12, 16])):
         macro_name = "SIZEOF_%s" % conflib.sanitize_string(c_type)
         size = conf.check_type_size(c_type, header_name=header_name,
-                                    features=features, expected_size=e_size)
+                                    features=features, expected_sizes=e_size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
         macro_name = "SIZEOF_COMPLEX_%s" % conflib.sanitize_string(c_type)
         complex_def = "struct {%s __x; %s __y;}" % (c_type, c_type)
         size = conf.check_type_size(complex_def, header_name=header_name,
-                                    features=features, expected_size=2*e_size)
+                                    features=features, expected_sizes=2*size)
         NUMPYCONFIG_SYM.append((macro_name, str(size)))
 
     if sys.platform != 'darwin':
         conf.check_ldouble_representation()
 
-    size = conf.check_type_size("Py_intptr_t", header_name=header_name, features=features)
+    size = conf.check_type_size("Py_intptr_t", header_name=header_name,
+                                expected_sizes=[4, 8], features=features)
     NUMPYCONFIG_SYM.append(('SIZEOF_%s' % conflib.sanitize_string("Py_intptr_t"),
                            '%d' % size))
 
     # We check declaration AND type because that's how distutils does it.
     try:
         conf.check_declaration("PY_LONG_LONG", header_name=header_name,
-                               features=features)
+                               features=features, expected_sizes=[4, 8])
         size = conf.check_type_size("PY_LONG_LONG", header_name=header_name,
                                     features=features)
         NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_LONGLONG",
