@@ -134,7 +134,7 @@ def check_math_runtime(conf):
     header_name = "Python.h math.h"
     features = "c cprogram pyext"
 
-    mlibs = ["", "m", "cpml"]
+    mlibs = [None, "m", "cpml"]
     mathlib = os.environ.get('MATHLIB')
     if mathlib:
         mlibs.insert(0, mathlib)
@@ -142,8 +142,12 @@ def check_math_runtime(conf):
     mlib = None
     for lib in mlibs:
         try:
-            st = conf.check_functions_at_once(["exp"], lib=lib, uselib_store="M")
-            mlib = lib
+            if lib is None:
+                kw = {}
+            else:
+                kw = {"lib": lib}
+            st = conf.check_functions_at_once(["exp"], uselib_store="M", **kw)
+            mlib = lib or []
             break
         except waflib.Errors.ConfigurationError:
             pass
