@@ -158,11 +158,11 @@ def check_math_runtime(conf):
     # XXX: this is ugly: mathlib has nothing to do in a public header file
     NUMPYCONFIG_SYM.append(('MATHLIB', ','.join(mlib)))
 
-    conf.check_functions_at_once(MANDATORY_FUNCS, uselib="M")
+    conf.check_functions_at_once(MANDATORY_FUNCS, use="M")
 
     mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
               'rint', 'trunc')
-    conf.check_functions_at_once(mfuncs, uselib="M")
+    conf.check_functions_at_once(mfuncs, use="M")
 
     header_name = "Python.h math.h"
     features = "c pyext"
@@ -176,11 +176,11 @@ def check_math_runtime(conf):
             pass
 
     conf.check_functions_at_once(OPTIONAL_STDFUNCS,
-            features=features, mandatory=False, uselib="M")
+            features=features, mandatory=False, use="M")
     conf.check_functions_at_once(C99_FUNCS_SINGLE,
-            features=features, mandatory=False, uselib="M")
+            features=features, mandatory=False, use="M")
     conf.check_functions_at_once(C99_FUNCS_EXTENDED,
-            features=features, mandatory=False, uselib="M")
+            features=features, mandatory=False, use="M")
 
     for f in ["isnan", "isinf", "signbit", "isfinite"]:
         try:
@@ -210,7 +210,7 @@ def check_complex(conf):
 
         for prec in ["", "f", "l"]:
             flist = [f + prec for f in C99_COMPLEX_FUNCS]
-            conf.check_functions_at_once(flist, uselib="M")
+            conf.check_functions_at_once(flist, use="M")
     else:
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_COMPLEX', ''))
         for t in C99_COMPLEX_TYPES:
@@ -366,7 +366,7 @@ def build(bld):
     bld(target="sort_templates", source=sort_templates)
 
     umath_tests_src = ["src/umath/umath_tests.c.src"]
-    bld(target="umath_tests_templates", source=sort_templates)
+    bld(target="umath_tests_templates", source=umath_tests_src)
 
     # npymath 
     npymath_sources = [
@@ -379,7 +379,7 @@ def build(bld):
     bld(features="c pyext cstlib",
         source=npymath_sources,
         includes=["src/private", "src/npymath"],
-        uselib="cshlib",
+        use="cshlib",
         target="npymath")
 
     # multiarray
@@ -394,14 +394,14 @@ def build(bld):
         target="_sort",
         source="src/_sortmodule.c",
         includes=includes,
-        uselib_local="npymath")
+        use="npymath")
 
     includes = ["src/multiarray", "src/private"]
     bld(features="c cshlib pyext",
         includes=includes,
         target="multiarray",
         source="src/multiarray/multiarraymodule_onefile.c",
-        uselib_local="npymath")
+        use="npymath")
 
     bld(features="c cshlib pyext",
         includes=includes,
@@ -423,7 +423,7 @@ def build(bld):
         includes=includes,
         target="umath",
         source="src/umath/umathmodule_onefile.c",
-        uselib_local="npymath")
+        use="npymath")
 
     bld(features="c cshlib pyext",
         includes=includes,
@@ -435,11 +435,11 @@ def build(bld):
         #includes=includes,
         target="scalarmath",
         source="src/scalarmathmodule.c",
-        uselib_local="npymath")
+        use="npymath")
 
     if bld.env.HAS_CBLAS:
         bld(features="c cshlib pyext",
             target="_dotblas",
             source="blasdot/_dotblas.c",
             includes="src/private",
-            uselib="CBLAS")
+            use="CBLAS")
