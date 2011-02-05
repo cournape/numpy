@@ -106,9 +106,9 @@ def type_checks(conf):
     # We check declaration AND type because that's how distutils does it.
     try:
         conf.check_declaration("PY_LONG_LONG", header_name=header_name,
-                               features=features, expected_sizes=[4, 8])
+                               features=features)
         size = conf.check_type_size("PY_LONG_LONG", header_name=header_name,
-                                    features=features)
+                                    features=features, expected_sizes=[4, 8])
         NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_LONGLONG",
                                 "#define NPY_SIZEOF_LONGLONG %d" % size))
         NUMPYCONFIG_SYM.append(("DEFINE_NPY_SIZEOF_PY_LONG_LONG",
