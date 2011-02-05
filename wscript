@@ -33,7 +33,14 @@ def check_blas_lapack(conf):
     if sys.platform == "win32":
         print("No blas/lapack check implemented on win32")
     elif sys.platform == "darwin":
-        print("No blas/lapack check implemented on darwin")
+        try:
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="CBLAS")
+            conf.env.HAS_CBLAS = True
+
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="LAPACK")
+            conf.env.HAS_LAPACK = True
+        except waflib.Errors.ConfigurationError:
+            pass
     else:
         try:
             conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
