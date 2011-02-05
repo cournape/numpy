@@ -56,6 +56,10 @@ def configure(conf):
     conf.check_tool('python')
     conf.check_python_version((2, 4, 0))
     conf.check_python_headers()
+    if sys.platform == "darwin":
+        # FIXME: fix the python waf tool to work on mac os X
+        conf.env.CC = ["/usr/bin/gcc-4.0"]
+        conf.env.LINK_CC = ["/usr/bin/gcc-4.0"]
 
     check_blas_lapack(conf)
 
