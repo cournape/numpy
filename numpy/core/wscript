@@ -37,6 +37,13 @@ NUMPYCONFIG_SYM.append(('VISIBILITY_HIDDEN', ''))
 NUMPYCONFIG_SYM.append(('NPY_ABI_VERSION', '0x%.8X' % C_ABI_VERSION))
 NUMPYCONFIG_SYM.append(('NPY_API_VERSION', '0x%.8X' % C_API_VERSION))
 
+# Set to True to enable multiple file compilations (experimental)
+try:
+    os.environ['NPY_SEPARATE_COMPILATION']
+    ENABLE_SEPARATE_COMPILATION = True
+except KeyError:
+    ENABLE_SEPARATE_COMPILATION = False
+
 def is_npy_no_signal():
     """Return True if the NPY_NO_SIGNAL symbol must be defined in configuration
     header."""
@@ -249,6 +256,12 @@ def configure(conf):
     conf.check_inline()
     check_complex(conf)
 
+    if ENABLE_SEPARATE_COMPILATION:
+        conf.define("ENABLE_SEPARATE_COMPILATION", 1)
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', '#define NPY_ENABLE_SEPARATE_COMPILATION 1'))
+    else:
+        NUMPYCONFIG_SYM.append(('DEFINE_NPY_ENABLE_SEPARATE_COMPILATION', ''))
+
     conf.env["CONFIG_HEADER_TEMPLATE"] = """\
 %(content)s
 #ifndef _NPY_NPY_CONFIG_H_
@@ -397,11 +410,51 @@ def build(bld):
         use="npymath")
 
     includes = ["src/multiarray", "src/private"]
-    bld(features="c cshlib pyext",
-        includes=includes,
-        target="multiarray",
-        source="src/multiarray/multiarraymodule_onefile.c",
-        use="npymath")
+    if ENABLE_SEPARATE_COMPILATION:
+        multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule.c'),
+            pjoin('src', 'multiarray', 'hashdescr.c'),
+            pjoin('src', 'multiarray', 'arrayobject.c'),
+            pjoin('src', 'multiarray', 'datetime.c'),
+            pjoin('src', 'multiarray', 'numpyos.c'),
+            pjoin('src', 'multiarray', 'flagsobject.c'),
+            pjoin('src', 'multiarray', 'descriptor.c'),
+            pjoin('src', 'multiarray', 'iterators.c'),
+            pjoin('src', 'multiarray', 'mapping.c'),
+            pjoin('src', 'multiarray', 'number.c'),
+            pjoin('src', 'multiarray', 'getset.c'),
+            pjoin('src', 'multiarray', 'sequence.c'),
+            pjoin('src', 'multiarray', 'methods.c'),
+            pjoin('src', 'multiarray', 'ctors.c'),
+            pjoin('src', 'multiarray', 'convert_datatype.c'),
+            pjoin('src', 'multiarray', 'convert.c'),
+            pjoin('src', 'multiarray', 'shape.c'),
+            pjoin('src', 'multiarray', 'item_selection.c'),
+            pjoin('src', 'multiarray', 'calculation.c'),
+            pjoin('src', 'multiarray', 'common.c'),
+            pjoin('src', 'multiarray', 'refcount.c'),
+            pjoin('src', 'multiarray', 'conversion_utils.c'),
+            pjoin('src', 'multiarray', 'usertypes.c'),
+            pjoin('src', 'multiarray', 'buffer.c'),
+            pjoin('src', 'multiarray', 'numpymemoryview.c'),
+            pjoin('src', 'multiarray', 'scalarapi.c'),
+            pjoin('src', 'multiarray', 'arraytypes.c'),
+            pjoin('src', 'multiarray', 'scalartypes.c'),
+            pjoin('src', 'multiarray', 'new_iterator.c'),
+            pjoin('src', 'multiarray', 'new_iterator_pywrap.c'),
+            pjoin('src', 'multiarray', 'lowlevel_strided_loops.c'),
+            pjoin('src', 'multiarray', 'dtype_transfer.c'),
+            pjoin('src', 'multiarray', 'einsum.c')]
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="multiarray",
+            source=multiarray_src,
+            use="npymath")
+    else:
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="multiarray",
+            source="src/multiarray/multiarraymodule_onefile.c",
+            use="npymath")
 
     bld(features="c cshlib pyext",
         includes=includes,
@@ -419,11 +472,21 @@ def build(bld):
         name="umath_gen")
 
     includes = ["src/umath", "src/private"]
-    bld(features="c cshlib pyext",
-        includes=includes,
-        target="umath",
-        source="src/umath/umathmodule_onefile.c",
-        use="npymath")
+    if ENABLE_SEPARATE_COMPILATION:
+        src = [pjoin('src', 'umath', 'ufunc_object.c'),
+               pjoin('src', 'umath', 'loops.c'),
+               pjoin('src', 'umath', 'umathmodule.c')]
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="umath",
+            source=src,
+            use="npymath")
+    else:
+        bld(features="c cshlib pyext",
+            includes=includes,
+            target="umath",
+            source="src/umath/umathmodule_onefile.c",
+            use="npymath")
 
     bld(features="c cshlib pyext",
         includes=includes,
