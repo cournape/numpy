@@ -12,11 +12,18 @@ matrix:
       env: NPY_SEPARATE_COMPILATION=0
     - python: 3.2
       env: NPY_SEPARATE_COMPILATION=0
+    - python: 2.7
+      env: NPY_USE_BENTO=1
 before_install:
   - mkdir builds
   - pushd builds
   - pip install nose
   # pip install coverage
+  - pip install 
+  - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
+      pip install git+http://github.com/cournape/Bento.git;
+      git clone https://code.google.com/p/waf waf-git;
+    fi
   - python -V
   - popd
 install:
@@ -29,7 +36,12 @@ install:
   # have been removed from master. (See gh-2765, gh-2768.)  Using 'pip
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
-  - pip install .
+  - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
+      WAFDIR=${PWD}/waf-git bentomaker build
+    else
+      pip install .
+    fi
+
 script:
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
