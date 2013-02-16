@@ -22,7 +22,7 @@ before_install:
   - pip install 
   - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
       pip install git+http://github.com/cournape/Bento.git;
-      git clone --depth=1 --quiet https://code.google.com/p/waf waf-git;
+      git clone --quiet https://code.google.com/p/waf waf-git;
       fi
   - python -V
   - pwd
@@ -41,7 +41,7 @@ install:
       WAFDIR=${PWD}/builds/waf-git bentomaker build;
       else
       pip install .;
-    fi
+      fi
 
 script:
   # We change directories to make sure that python won't find the copy
