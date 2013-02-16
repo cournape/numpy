@@ -25,6 +25,7 @@ before_install:
       git clone https://code.google.com/p/waf waf-git;
       fi
   - python -V
+  - pwd
   - popd
 install:
   # We used to use 'setup.py install' here, but that has the terrible
