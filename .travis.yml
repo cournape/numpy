@@ -2,16 +2,16 @@
 #   http://lint.travis-ci.org/
 language: python
 python:
-  - 2.6
+  #- 2.6
   - 2.7
-  - 3.2
-  - 3.3
+  #- 3.2
+  #- 3.3
 matrix:
   include:
-    - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=0
-    - python: 3.2
-      env: NPY_SEPARATE_COMPILATION=0
+    #- python: 2.7
+    #  env: NPY_SEPARATE_COMPILATION=0
+    #- python: 3.2
+    #  env: NPY_SEPARATE_COMPILATION=0
     - python: 2.7
       env: NPY_USE_BENTO=1
 before_install:
@@ -23,7 +23,7 @@ before_install:
   - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
       pip install git+http://github.com/cournape/Bento.git;
       git clone https://code.google.com/p/waf waf-git;
-    fi
+      fi
   - python -V
   - popd
 install:
@@ -37,9 +37,9 @@ install:
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
   - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
-      WAFDIR=${PWD}/waf-git bentomaker build
-    else
-      pip install .
+      WAFDIR=${PWD}/waf-git bentomaker build;
+      else
+      pip install .;
     fi
 
 script:
