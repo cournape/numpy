@@ -37,7 +37,7 @@ install:
   # install' also has the advantage that it tests that numpy is 'pip
   # install' compatible, see e.g. gh-2766...
   - if [[ "${NPY_USE_BENTO}" -eq 1 ]]; then
-      WAFDIR=${PWD}/waf-git bentomaker build;
+      WAFDIR=${PWD}/../builds/waf-git bentomaker build;
       else
       pip install .;
     fi
