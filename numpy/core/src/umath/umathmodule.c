@@ -85,20 +85,16 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
 }
 
 static PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
-    /* Keywords are ignored for now */
-
-    PyObject *function, *pyname = NULL;
-    int nin, nout, i;
+npy_capi_ufunc_frompyfunc(PyObject* function, int nin, int nout)
+{
+    PyObject *pyname = NULL;
+    int i;
     PyUFunc_PyFuncData *fdata;
     PyUFuncObject *self;
     char *fname, *str;
     Py_ssize_t fname_len = -1;
     int offset[2];
 
-    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
-        return NULL;
-    }
     if (!PyCallable_Check(function)) {
         PyErr_SetString(PyExc_TypeError, "function must be callable");
         return NULL;
@@ -204,7 +200,46 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     return (PyObject *)self;
 }
 
+static PyObject *
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
+    /* Keywords are ignored for now */
+
+    PyObject *function;
+    int nin, nout;
+
+    if (!PyArg_ParseTuple(args, "Oii", &function, &nin, &nout)) {
+        return NULL;
+    }
+
+    return npy_capi_ufunc_frompyfunc(function, nin, nout);
+}
+
+
 /* docstring in numpy.add_newdocs.py */
+static PyObject*
+npy_capi_add_newdoc_ufunc(PyUFuncObject *ufunc, char* docstr)
+{
+    char *newdocstr;
+
+    if (NULL != ufunc->doc) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot change docstring of ufunc with non-NULL docstring");
+        return NULL;
+    }
+
+    /*
+     * This introduces a memory leak, as the memory allocated for the doc
+     * will not be freed even if the ufunc itself is deleted. In practice
+     * this should not be a problem since the user would have to
+     * repeatedly create, document, and throw away ufuncs.
+     */
+    newdocstr = malloc(strlen(docstr) + 1);
+    strcpy(newdocstr, docstr);
+    ufunc->doc = newdocstr;
+
+    Py_RETURN_NONE;
+}
+
 static PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
@@ -226,23 +261,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     docstr = PyString_AS_STRING(str);
 #endif
 
-    if (NULL != ufunc->doc) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot change docstring of ufunc with non-NULL docstring");
-        return NULL;
-    }
-
-    /*
-     * This introduces a memory leak, as the memory allocated for the doc
-     * will not be freed even if the ufunc itself is deleted. In practice
-     * this should not be a problem since the user would have to
-     * repeatedly create, document, and throw away ufuncs.
-     */
-    newdocstr = malloc(strlen(docstr) + 1);
-    strcpy(newdocstr, docstr);
-    ufunc->doc = newdocstr;
-
-    Py_RETURN_NONE;
+    return npy_capi_add_newdoc_ufunc(ufunc, docstr);
 }
 
 

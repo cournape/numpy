@@ -4352,14 +4352,11 @@ fail:
 }
 
 NPY_NO_EXPORT PyObject *
-ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
+npy_capi_ufunc_geterr()
 {
     PyObject *thedict;
     PyObject *res;
 
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
     thedict = PyThreadState_GetDict();
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
@@ -4378,6 +4375,16 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyList_SET_ITEM(res, 1, PyInt_FromLong(UFUNC_ERR_DEFAULT));
     PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
     return res;
+}
+
+NPY_NO_EXPORT PyObject *
+ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+
+    return npy_capi_ufunc_geterr();
 }
 
 #if USE_USE_DEFAULTS==1
@@ -4414,16 +4421,12 @@ ufunc_update_use_defaults(void)
 #endif
 
 NPY_NO_EXPORT PyObject *
-ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
+npy_capi_ufunc_seterr(PyObject *val)
 {
     PyObject *thedict;
     int res;
-    PyObject *val;
     static char *msg = "Error object must be a list of length 3";
 
-    if (!PyArg_ParseTuple(args, "O", &val)) {
-        return NULL;
-    }
     if (!PyList_CheckExact(val) || PyList_GET_SIZE(val) != 3) {
         PyErr_SetString(PyExc_ValueError, msg);
         return NULL;
@@ -4442,6 +4445,18 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 #endif
     Py_RETURN_NONE;
+}
+
+NPY_NO_EXPORT PyObject *
+ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyObject *val;
+
+    if (!PyArg_ParseTuple(args, "O", &val)) {
+        return NULL;
+    }
+
+    return npy_capi_ufunc_seterr(val);
 }
 
 
