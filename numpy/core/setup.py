@@ -901,6 +901,7 @@ def configuration(parent_package='',top_path=None):
         return []
 
     umath_src = [
+            join('src', 'umath', 'umath.c'),
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),

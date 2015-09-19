@@ -84,7 +84,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
     return 0;
 }
 
-static PyObject *
+PyObject *
 npy_capi_ufunc_frompyfunc(PyObject* function, int nin, int nout)
 {
     PyObject *pyname = NULL;
@@ -216,7 +216,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 
 
 /* docstring in numpy.add_newdocs.py */
-static PyObject*
+PyObject*
 npy_capi_add_newdoc_ufunc(PyUFuncObject *ufunc, char* docstr)
 {
     char *newdocstr;
@@ -331,6 +331,13 @@ static struct PyModuleDef moduledef = {
 
 #include <stdio.h>
 
+NPY_NO_EXPORT void
+npy_capi_init_operators(PyObject *d)
+{
+	InitOperators(d);
+}
+
+#if 0
 #if defined(NPY_PY3K)
 #define RETVAL m
 PyMODINIT_FUNC PyInit_umath(void)
@@ -460,3 +467,4 @@ PyMODINIT_FUNC initumath(void)
     }
     return RETVAL;
 }
+#endif
