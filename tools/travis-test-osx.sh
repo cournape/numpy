@@ -5,6 +5,7 @@ export NPY_NUM_BUILD_JOBS=2
 
 . venv/bin/activate
 python -V
+pip install cython nose pytz
 python setup.py bdist_wheel
 
 python -m virtualenv venv-for-wheel
