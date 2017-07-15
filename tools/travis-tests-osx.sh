@@ -1,0 +1,6 @@
+export NPY_NUM_BUILD_JOBS=2
+
+clean_code numpy
+build_wheel numpy x86_64
+
+install_run x86_64
