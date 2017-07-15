@@ -97,16 +97,16 @@ matrix:
 
 before_install:
   - if [[ "${TRAVIS_OS_NAME}" -eq "linux" ]]; then
-      ./tools/travis-before-install.sh
+      ./tools/travis-before-install.sh;
     else
-      ./tools/travis-before-install-osx.sh
+      ./tools/travis-before-install-osx.sh;
     fi;
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" -eq "linux" ]]; then
-      ./tools/travis-test.sh
+      ./tools/travis-test.sh;
     else
-      ./tools/travis-test-osx.sh
+      ./tools/travis-test-osx.sh;
     fi;
 
 #after_success:
