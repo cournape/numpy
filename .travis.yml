@@ -96,14 +96,14 @@ matrix:
         - MB_PYTHON_VERSION=3.6
 
 before_install:
-  - if [[ "${TRAVIS_OS_NAME}" -eq "linux" ]]; then
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
       ./tools/travis-before-install.sh;
     else
       ./tools/travis-before-install-osx.sh;
     fi;
 
 script:
-  - if [[ "${TRAVIS_OS_NAME}" -eq "linux" ]]; then
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
       ./tools/travis-test.sh;
     else
       ./tools/travis-test-osx.sh;
