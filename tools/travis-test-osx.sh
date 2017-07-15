@@ -1,9 +1,14 @@
 export NPY_NUM_BUILD_JOBS=2
 
-source multibuild/common_utils.sh
-source multibuild/travis_steps.sh
+python setup.py bdist_wheel
 
-clean_code numpy "${TRAVIS_COMMIT}"
-build_wheel numpy x86_64
+python -m virtualenv venv-for-wheel
+. venv-for-wheel/bin/activate
 
-install_run x86_64
+pushd dir
+pip install --pre --no-index --upgrade --find-links=. numpy
+popd
+
+pushd empty
+python ../tools/test-installed-numpy.py
+popd
