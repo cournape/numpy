@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 export NPY_NUM_BUILD_JOBS=2
 
@@ -7,7 +7,13 @@ export NPY_NUM_BUILD_JOBS=2
 python -V
 python -c "import sys; print(sys.exec_prefix)"
 
+pip install wheel
+# ensure that the pip / setuptools versions deployed inside
+# the venv are recent enough
+pip install -U virtualenv
+virtualenv --version
 pip install cython nose pytz
+
 export CFLAGS="-Wno-sign-compare -arch x86_64 -O0"
 export CXXFLAGS="-Wno-sign-compare -arch x86_64 -O0"
 export CC=clang
