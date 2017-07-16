@@ -8,8 +8,8 @@ python -V
 python -c "import sys; print(sys.exec_prefix)"
 
 pip install cython nose pytz
-export CFLAGS="-Wno-sign-compare -x86_64 -O0"
-export CXXFLAGS="-Wno-sign-compare -x86_64 -O0"
+export CFLAGS="-Wno-sign-compare -arch x86_64 -O0"
+export CXXFLAGS="-Wno-sign-compare -arch x86_64 -O0"
 export CC=clang
 export CXX=clang++
 python setup.py bdist_wheel
