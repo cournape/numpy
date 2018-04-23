@@ -2207,7 +2207,7 @@ PyArray_Nonzero(PyArrayObject *self)
     /* Allocate the result as a 2D array */
     ret_dims[0] = nonzero_count;
     ret_dims[1] = (ndim == 0) ? 1 : ndim;
-    ret = (PyArrayObject *)PyArray_New(&PyArray_Type, 2, ret_dims,
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(self), 2, ret_dims,
                        NPY_INTP, NULL, NULL, 0, 0,
                        NULL);
     if (ret == NULL) {
